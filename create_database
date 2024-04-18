@@ -1,0 +1,12 @@
+Comandos para criação de databases:
+
+PRODUTO:
+CREATE DATABASE IF NOT EXISTS produto; 
+
+USE produto; 
+
+CREATE TABLE IF NOT EXISTS produtos(
+id INT AUTO_INCREMENT PRIMARY KEY, codprod VARCHAR(20) 
+UNIQUE, numlote VARCHAR(20), 
+nomeprod VARCHAR(255), validade DATE, datafab DATE);
+
