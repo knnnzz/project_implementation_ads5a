@@ -45,4 +45,18 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/', async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(configDatabase);
+    const [rows] = await connection.query('SELECT * FROM lotes');
+
+    connection.end()
+
+    res.status(200).json(rows)
+  } catch (error) {
+    console.error('Erro ao listar lotes:', error);
+    res.status(500).json({ error: 'Erro interno no servidor ao listar lotes' });
+  }
+})
+
 module.exports = router;
