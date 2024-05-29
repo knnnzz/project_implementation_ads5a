@@ -30,11 +30,12 @@ router.post('/', async (req, res) => {
       numlote: req.body.numlote,
       codprod: req.body.codprod,
       fornecedor: req.body.fornecedor,
-      numvalid: req.body.numvalid
+      numvalid: req.body.numvalid,
+      statusprod: req.body.statusprod
     };
     const [result] = await connection.query(
-      'INSERT INTO lotes (numlote, codprod, fornecedor, numvalid) VALUES (?, ?, ?, ?)',
-      [novoLote.numlote, novoLote.codprod, novoLote.fornecedor, novoLote.numvalid]
+      'INSERT INTO lotes (numlote, codprod, fornecedor, numvalid, statusprod) VALUES (?, ?, ?, ?, ?)',
+      [novoLote.numlote, novoLote.codprod, novoLote.fornecedor, novoLote.numvalid, novoLote.statusprod]
     );
 
     connection.end();
