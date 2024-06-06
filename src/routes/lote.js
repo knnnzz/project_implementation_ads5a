@@ -2,7 +2,6 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const axios = require('axios');
 
-
 const router = express.Router();
 const configDatabase = {
   host: 'localhost',
@@ -12,10 +11,12 @@ const configDatabase = {
 };
 
 const configProdutosAPI = {
-  baseURL: 'http://localhost:3000/api', 
+  baseURL: 'http://localhost:3030/api',
 };
 
-router.post('/', async (req, res) => {
+const pool = mysql.createPool(configDatabase);
+
+router.post('/cadastraLote', async (req, res) => {
   try {
     const produtosResponse = await axios.get('/produtos', configProdutosAPI);
     const produtos = produtosResponse.data;
@@ -25,20 +26,21 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'O numlote já existe na API de produtos' });
     }
 
-    const connection = await mysql.createConnection(configDatabase);
+    const connection = await pool.getConnection();
+
     const novoLote = {
       numlote: req.body.numlote,
       codprod: req.body.codprod,
       fornecedor: req.body.fornecedor,
       numvalid: req.body.numvalid,
-      statusprod: req.body.statusprod
+      StatusLote: req.body.StatusLote
     };
     const [result] = await connection.query(
-      'INSERT INTO lotes (numlote, codprod, fornecedor, numvalid, statusprod) VALUES (?, ?, ?, ?, ?)',
-      [novoLote.numlote, novoLote.codprod, novoLote.fornecedor, novoLote.numvalid, novoLote.statusprod]
+      'INSERT INTO lotes (numlote, codprod, fornecedor, numvalid, StatusLote) VALUES (?, ?, ?, ?, ?)',
+      [novoLote.numlote, novoLote.codprod, novoLote.fornecedor, novoLote.numvalid, novoLote.StatusLote]
     );
 
-    connection.end();
+    connection.release();
     res.status(201).json({ message: 'Lote cadastrado com sucesso!' });
   } catch (error) {
     console.error('Erro ao cadastrar lote:', error);
@@ -46,18 +48,43 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/listaLotes', async (req, res) => {
   try {
-    const connection = await mysql.createConnection(configDatabase);
-    const [rows] = await connection.query('SELECT * FROM lotes');
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT id, codprod, fornecedor, StatusLote FROM lotes');
 
-    connection.end()
+    connection.release();
 
-    res.status(200).json(rows)
+    res.status(200).json(rows);
   } catch (error) {
     console.error('Erro ao listar lotes:', error);
     res.status(500).json({ error: 'Erro interno no servidor ao listar lotes' });
   }
-})
+});
+
+router.put('/updateLote', async (req, res) => {
+  const loteStatus = {
+    StatusLote: req.body.StatusLote,
+    codprod: req.body.idProduto
+  };
+
+  try {
+    const connection = await pool.getConnection();
+
+    const query = 'UPDATE lotes SET StatusLote = ? WHERE codprod = ?';
+    const [result] = await connection.execute(query, [loteStatus.StatusLote, loteStatus.codprod]);
+
+    connection.release();
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: 'Lote atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Lote não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar lote:', error);
+    res.status(500).json({ error: 'Erro interno no servidor ao atualizar lote' });
+  }
+});
 
 module.exports = router;
